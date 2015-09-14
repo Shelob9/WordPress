@@ -170,12 +170,16 @@ class WP_User {
 	 *
 	 * @global wpdb $wpdb
 	 *
-	 * @param string $field The field to query against: 'id', 'slug', 'email' or 'login'
+	 * @param string $field The field to query against: 'id', 'ID', 'slug', 'email' or 'login'
 	 * @param string|int $value The field value
 	 * @return object|false Raw user object
 	 */
 	public static function get_data_by( $field, $value ) {
 		global $wpdb;
+		
+		if ( 'ID' == $field ) {
+			$field = 'id';
+		}
 
 		if ( 'id' == $field ) {
 			// Make sure the value is numeric to avoid casting objects, for example,
