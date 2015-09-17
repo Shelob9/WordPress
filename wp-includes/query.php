@@ -484,7 +484,7 @@ function is_month() {
  *
  * @global WP_Query $wp_query
  *
- * @param mixed $page Page ID, title, slug, or array of such.
+ * @param string|array $page Page ID, title, slug, or array of such.
  * @return bool
  */
 function is_page( $page = '' ) {
@@ -593,7 +593,7 @@ function is_search() {
  *
  * @global WP_Query $wp_query
  *
- * @param mixed $post Post ID, title, slug, or array of such.
+ * @param string|array $post Post ID, title, slug, or array of such.
  * @return bool
  */
 function is_single( $post = '' ) {
@@ -620,7 +620,7 @@ function is_single( $post = '' ) {
  *
  * @global WP_Query $wp_query
  *
- * @param mixed $post_types Optional. Post Type or array of Post Types
+ * @param string|array $post_types Optional. Post Type or array of Post Types
  * @return bool
  */
 function is_singular( $post_types = '' ) {
@@ -4394,7 +4394,7 @@ class WP_Query {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param mixed $page Page ID, title, slug, path, or array of such.
+	 * @param string|array $page Page ID, title, slug, path, or array of such.
 	 * @return bool
 	 */
 	public function is_page( $page = '' ) {
@@ -4487,7 +4487,7 @@ class WP_Query {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param mixed $post Post ID, title, slug, path, or array of such.
+	 * @param string|array $post Post ID, title, slug, path, or array of such.
 	 * @return bool
 	 */
 	public function is_single( $post = '' ) {
@@ -4533,7 +4533,7 @@ class WP_Query {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param mixed $post_types Optional. Post Type or array of Post Types
+	 * @param string|array $post_types Optional. Post Type or array of Post Types
 	 * @return bool
 	 */
 	public function is_singular( $post_types = '' ) {
