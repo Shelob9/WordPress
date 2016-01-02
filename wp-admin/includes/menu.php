@@ -330,6 +330,12 @@ if ( !empty( $menu ) && 'wp-menu-separator' == $menu[ $last_menu_key ][ 4 ] )
 	unset( $menu[ $last_menu_key ] );
 unset( $last_menu_key );
 
+global $_registered_pages;
+if ( isset( $_GET[ 'page' ] ) && !isset($_registered_pages[get_plugin_page_hookname( $plugin_page, get_admin_page_parent() )]) ){
+	wp_die( __( 'The page you have requested does not exist.' ), 403 );
+}
+
+
 if ( !user_can_access_admin_page() ) {
 
 	/**
