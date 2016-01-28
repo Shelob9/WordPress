@@ -227,10 +227,8 @@ function update_metadata($meta_type, $object_id, $meta_key, $meta_value, $prev_v
 		 * @param mixed  $meta_value Meta value.
 		 */
 		do_action( "update_{$meta_type}_meta", $meta_id, $object_id, $meta_key, $_meta_value );
-	}
 
-	if ( 'post' == $meta_type ) {
-		foreach ( $meta_ids as $meta_id ) {
+		if ( 'post' == $meta_type ) {
 			/**
 			 * Fires immediately before updating a post's metadata.
 			 *
@@ -242,8 +240,11 @@ function update_metadata($meta_type, $object_id, $meta_key, $meta_value, $prev_v
 			 * @param mixed  $meta_value Meta value.
 			 */
 			do_action( 'update_postmeta', $meta_id, $object_id, $meta_key, $meta_value );
+
 		}
+
 	}
+
 
 	$result = $wpdb->update( $table, $data, $where );
 	if ( ! $result )
@@ -266,10 +267,8 @@ function update_metadata($meta_type, $object_id, $meta_key, $meta_value, $prev_v
 		 * @param mixed  $meta_value Meta value.
 		 */
 		do_action( "updated_{$meta_type}_meta", $meta_id, $object_id, $meta_key, $_meta_value );
-	}
 
-	if ( 'post' == $meta_type ) {
-		foreach ( $meta_ids as $meta_id ) {
+		if ( 'post' == $meta_type ) {
 			/**
 			 * Fires immediately after updating a post's metadata.
 			 *
@@ -281,9 +280,11 @@ function update_metadata($meta_type, $object_id, $meta_key, $meta_value, $prev_v
 			 * @param mixed  $meta_value Meta value.
 			 */
 			do_action( 'updated_postmeta', $meta_id, $object_id, $meta_key, $meta_value );
-		}
-	}
 
+		}
+
+	}
+	
 	return true;
 }
 
