@@ -298,64 +298,14 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			add_filter( 'post_password_required', '__return_false' );
 		}
 
-		$posts = array();
-
-		foreach ( $query_result as $post ) {
-			if ( ! $this->check_read_permission( $post ) ) {
-				continue;
-			}
-
-			$data    = $this->prepare_item_for_response( $post, $request );
-			$posts[] = $this->prepare_response_for_collection( $data );
-		}
+		$posts = $this->prepare_posts_for_response( $request, $query_result );
 
 		// Reset filter.
 		if ( 'edit' === $request['context'] ) {
 			remove_filter( 'post_password_required', '__return_false' );
 		}
 
-		$page = (int) $query_args['paged'];
-		$total_posts = $posts_query->found_posts;
-
-		if ( $total_posts < 1 ) {
-			// Out-of-bounds, run the query again without LIMIT for total count.
-			unset( $query_args['paged'] );
-
-			$count_query = new WP_Query();
-			$count_query->query( $query_args );
-			$total_posts = $count_query->found_posts;
-		}
-
-		$max_pages = ceil( $total_posts / (int) $posts_query->query_vars['posts_per_page'] );
-
-		if ( $page > $max_pages && $total_posts > 0 ) {
-			return new WP_Error( 'rest_post_invalid_page_number', __( 'The page number requested is larger than the number of pages available.' ), array( 'status' => 400 ) );
-		}
-
-		$response  = rest_ensure_response( $posts );
-
-		$response->header( 'X-WP-Total', (int) $total_posts );
-		$response->header( 'X-WP-TotalPages', (int) $max_pages );
-
-		$request_params = $request->get_query_params();
-		$base = add_query_arg( $request_params, rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
-
-		if ( $page > 1 ) {
-			$prev_page = $page - 1;
-
-			if ( $prev_page > $max_pages ) {
-				$prev_page = $max_pages;
-			}
-
-			$prev_link = add_query_arg( 'page', $prev_page, $base );
-			$response->link_header( 'prev', $prev_link );
-		}
-		if ( $max_pages > $page ) {
-			$next_page = $page + 1;
-			$next_link = add_query_arg( 'page', $next_page, $base );
-
-			$response->link_header( 'next', $next_link );
-		}
+		$response = $this->prepare_paginate_response( $request, $query_args, $posts_query, $posts );
 
 		return $response;
 	}
@@ -688,7 +638,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 		$post = get_post( $post_id );
 
-		/** This action is documented in wp-includes/rest-api/endpoints/class-wp-rest-posts-controller.php */
+		/* This action is documented in lib/endpoints/class-wp-rest-controller.php */
 		do_action( "rest_insert_{$this->post_type}", $post, $request, false );
 
 		$schema = $this->get_item_schema();
@@ -1209,7 +1159,6 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 	 * Checks whether current user can assign all terms sent with the current request.
 	 *
 	 * @since 4.7.0
-	 * @access protected
 	 *
 	 * @param WP_REST_Request $request The request object with post and terms data.
 	 * @return bool Whether the current user can assign the provided terms.
@@ -1561,9 +1510,6 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 	 * By default, WordPress will show password protected posts with a title of
 	 * "Protected: %s", as the REST API communicates the protected status of a post
 	 * in a machine readable format, we remove the "Protected: " prefix.
-	 *
-	 * @since 4.7.0
-	 * @access public
 	 *
 	 * @return string Protected title format.
 	 */
@@ -2252,4 +2198,89 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 		return $statuses;
 	}
+
+	/**
+	 * Create a collection of WordPress posts, formatted
+	 *
+	 * @since 4.7.3
+	 *
+	 * @param WP_REST_Request $request Current request
+	 * @param array $query_results An array of WP_Post objects, as returned by WP_Query::query()
+	 *
+	 * @return array
+	 */
+	protected function prepare_posts_for_response( $request, $query_results ) {
+		$posts = array();
+
+		foreach ( $query_results as $post ) {
+			if ( ! $this->check_read_permission( $post ) ) {
+				continue;
+			}
+
+			$data    = $this->prepare_item_for_response( $post, $request );
+			$posts[] = $this->prepare_response_for_collection( $data );
+		}
+
+		return $posts;
+
+	}
+
+	/**
+	 * Create a WP_REST_Response for a collection of posts, with the right pagination headers
+	 *
+	 * @since 4.7.3
+	 *
+	 * @param WP_REST_Request $request Current request object.
+	 * @param array $query_args The request's prepared WP_Query arguments, used to do the count query.
+	 * @param WP_Query $posts_query The WP_Query object used to prepare the posts for the response.
+	 * @param array $prepared_posts The prepared posts to return in response body.
+	 *
+	 * @return WP_REST_Response
+	 */
+	protected function prepare_paginate_response( $request, $query_args, $posts_query, $prepared_posts ) {
+		$page        = (int) $query_args[ 'paged' ];
+		$total_posts = $posts_query->found_posts;
+
+		if ( $total_posts < 1 ) {
+			// Out-of-bounds, run the query again without LIMIT for total count.
+			unset( $query_args[ 'paged' ] );
+
+			$count_query = new WP_Query();
+			$count_query->query( $query_args );
+			$total_posts = $count_query->found_posts;
+		}
+
+		$max_pages = ceil( $total_posts / (int) $posts_query->query_vars[ 'posts_per_page' ] );
+		$response  = rest_ensure_response( $prepared_posts );
+
+		$response->header( 'X-WP-Total', (int) $total_posts );
+		$response->header( 'X-WP-TotalPages', (int) $max_pages );
+
+		$request_params = $request->get_query_params();
+		$base           = add_query_arg( $request_params, rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
+
+		if ( $page > 1 ) {
+			$prev_page = $page - 1;
+
+			if ( $prev_page > $max_pages ) {
+				$prev_page = $max_pages;
+			}
+
+			$prev_link = add_query_arg( 'page', $prev_page, $base );
+			$response->link_header( 'prev', $prev_link );
+		}
+
+		if ( $max_pages > $page ) {
+			$next_page = $page + 1;
+			$next_link = add_query_arg( 'page', $next_page, $base );
+
+			$response->link_header( 'next', $next_link );
+
+			return $response;
+
+		}
+
+		return $response;
+	}
+
 }
