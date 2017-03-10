@@ -45,6 +45,8 @@ abstract class WP_Session_Tokens {
 	 * @static
 	 *
 	 * @param int $user_id User whose session to manage.
+	 *
+	 * @returns WP_User_Meta_Session_Tokens|WP_Session_Tokens Class instance, can be changed with "session_token_manager" filter
 	 */
 	final public static function get_instance( $user_id ) {
 		/**
